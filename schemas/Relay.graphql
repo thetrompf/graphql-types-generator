@@ -1,0 +1,25 @@
+interface Node {
+    id: ID!
+}
+
+extend type Query @resolvers(importPath: "resolvers/Relay/Query") {
+    node(id: ID!): Node @resolve
+    nodes(ids: [ID!]!): [Node]! @resolve
+}
+
+type PageInfo {
+    startCursor: String!
+    endCursor: String!
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+}
+
+interface Edge {
+    cursor: String!
+    node: Node
+}
+
+interface Connection {
+    edges: [Edge!]!
+    pageInfo: PageInfo!
+}

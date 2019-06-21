@@ -1,0 +1,11 @@
+type Viewer implements Node {
+    id: ID!
+}
+
+extend type Query @resolvers(importPath: "resolvers/Viewer/Query") {
+    """
+    The Viewer root object.
+    Representing the current executor / viewer of the query.
+    """
+    viewer: Viewer! @resolve
+}

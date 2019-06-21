@@ -1,0 +1,25 @@
+{
+  "name": "graphql-types-generator",
+  "version": "1.0.0-0",
+  "main": "index.js",
+  "author": "Brian K. Christensen <briankchristensen@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@types/express": "^4.17.0",
+    "@types/graphql": "^14.2.0",
+    "@types/graphql-relay": "^0.4.9",
+    "@types/jest": "^24.0.13",
+    "graphql-types-generator": "./packages/graphql-types-generator",
+    "jest": "^24.8.0",
+    "prettier": "^1.18.2",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.5.1"
+  },
+  "dependencies": {
+    "graphql": "^14.3.1",
+    "graphql-relay": "^0.6.0",
+    "graphql-tools": "^4.0.4",
+    "tslib": "^1.10.0"
+  }
+}

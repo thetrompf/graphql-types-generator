@@ -1,0 +1,5 @@
+"""
+The mutation object is the host for all mutation of the system.
+All mutation fields lives in a flat structure of this object.
+"""
+type Mutation

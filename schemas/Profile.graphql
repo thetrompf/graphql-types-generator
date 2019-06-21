@@ -1,0 +1,70 @@
+"""
+Representing an Profile of the system.
+"""
+type Profile implements Node {
+    """
+    The ID of this Profile.
+    """
+    id: ID!
+    """
+    The name of this Profile.
+    """
+    name: String!
+    """
+    Optional age of this Profile.
+    """
+    age: Int
+}
+
+extend type Viewer @resolvers(importPath: "resolvers/Profile/Viewer") {
+    profile: Profile! @resolve
+}
+
+"""
+The input object required for creating a new Profile.
+"""
+input CreateProfileInput {
+    name: String!
+}
+
+"""
+Result from creating a new Profile.
+"""
+type CreateProfilePayload {
+    profile: Profile!
+}
+
+"""
+The input object required for change the name of the Profile.
+"""
+input ChangeProfileNameInput {
+    """
+    The id of the profile to change the name of.
+    """
+    id: ID!
+    """
+    The new name you'll like to change the name to.
+    """
+    newName: String!
+}
+
+"""
+Result from object from change the name of the Profile.
+"""
+type ChangeProfileNamePayload {
+    """
+    The profile of which the name has changed.
+    """
+    profile: Profile!
+}
+
+extend type Mutation @resolver(importPath: "resolvers/Profile/Mutation") {
+    """
+    Create a new Profile.
+    """
+    createProfile(input: CreateProfileInput!): CreateProfilePayload! @resolve
+    """
+    Change the name of the profile.
+    """
+    changeProfileName(input: ChangeProfileNameInput!): ChangeProfileNamePayload! @resolve
+}

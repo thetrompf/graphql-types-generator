@@ -1,0 +1,2 @@
+directive @resolvers(importPath: String!) on OBJECT
+directive @resolve(resolverName: String) on FIELD_DEFINITION

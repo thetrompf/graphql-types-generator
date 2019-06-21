@@ -1,0 +1,13 @@
+{
+    "author": "Brian K. Christensen <briankchristensen@gmail.com>",
+    "dependencies": {
+        "graphql": "^14.3.1",
+        "graphql-relay": "^0.6.0",
+        "graphql-tools": "^4.0.4",
+        "tslib": "^1.10.0"
+    },
+    "license": "MIT",
+    "main": "index.js",
+    "name": "graphql-types-generator",
+    "version": "1.0.0-0"
+}
