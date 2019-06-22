@@ -1,1 +1,4 @@
+"""
+The root query object.
+"""
 type Query

@@ -10,6 +10,7 @@ import {
     ObjectTypeExtensionNode,
 } from 'graphql';
 import { PathLike } from 'fs';
+import { ResolversDirective } from './objectTypes';
 
 const AUTO_GEN_HEADER = `THIS FILE IS AUTO-GENERATED.
 ANY MODIFICATION WILL BE DISCARDED UPON NEXT COMPILATION.`;
@@ -24,7 +25,7 @@ export class GeneratorContext {
     public readonly document: DocumentNode;
     public readonly context: { importPath: string; importName: string } | null;
 
-    public readonly fieldResolversMap: Map<string, FieldDefinitionNode[]>;
+    public readonly fieldResolversMap: Map<string, (FieldDefinitionNode & { __gtg: { resolvers: Maybe<ResolversDirective> } })[]>;
     public readonly inputObjectTypeDefinitionsMap: Map<string, InputObjectTypeDefinitionNode[]>;
     public readonly interfaceTypeDefinitionsMap: Map<string, InterfaceTypeDefinitionNode[]>;
     public readonly objectTypeDefinitionsMap: Map<string, ObjectTypeDefinitionNode[]>;

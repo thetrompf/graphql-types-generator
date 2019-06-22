@@ -1,9 +1,25 @@
+"""
+The node interface for making the
+Relay store work.
+"""
 interface Node {
+    """
+    The ID of the node
+    must be a unique identifier across the graph.
+    """
     id: ID!
 }
 
 extend type Query @resolvers(importPath: "resolvers/Relay/Query") {
+    """
+    The resolver for fetching a single
+    node of implementing the Node interface.
+    """
     node(id: ID!): Node @resolve
+    """
+    The resolver for fetching multiple nodes
+    implementing the Node interface.
+    """
     nodes(ids: [ID!]!): [Node]! @resolve
 }
 
@@ -14,12 +30,31 @@ type PageInfo {
     hasPreviousPage: Boolean!
 }
 
+"""
+The edge interface represents
+intermediate graph nodes in a connection
+holding cursor info for pagination
+and lastly the data node.
+"""
 interface Edge {
+    """
+    String represents the nodes position of the connection
+    given the configuration (ordering and filter etc.) of the connection.
+    """
     cursor: String!
+    """
+    The actual data node of the graph.
+    """
     node: Node
 }
 
+"""
+The connection type useful for fetching alot of data nodes.
+"""
 interface Connection {
+    """
+    The resulting edges which contain the data nodes.
+    """
     edges: [Edge!]!
     pageInfo: PageInfo!
 }

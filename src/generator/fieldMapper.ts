@@ -9,9 +9,14 @@ import {
     NameNode,
     NamedTypeNode,
     TypeNode,
+    ObjectTypeDefinitionNode,
+    InterfaceTypeDefinitionNode,
+    InputObjectTypeDefinitionNode,
 } from 'graphql';
 import { relative, join } from 'path';
 import { ResolversDirective } from 'graphql-types-generator/generator/objectTypes';
+
+
 
 export function fieldNamedTypeMapper(
     context: GeneratorContext,
@@ -48,8 +53,10 @@ export function fieldNamedTypeMapper(
                     ]),
                 );
                 return ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
-            } else if (objectTypeDefinitions != null) {
-                const defNode = objectTypeDefinitions[0];
+            }
+
+            const generateFieldType = (defNodes: ObjectTypeDefinitionNode[] | InterfaceTypeDefinitionNode[] | InputObjectTypeDefinitionNode[]): ts.TypeNode => {
+                const defNode = defNodes[0];
                 const importPath = join(
                     context.importPrefix,
                     relative(context.inputPath.toString(), defNode.loc!.source.name),
@@ -61,32 +68,14 @@ export function fieldNamedTypeMapper(
                     importNames.add(defNode.name.value);
                 }
                 return ts.createTypeReferenceNode(ts.createIdentifier(defNode.name.value), undefined);
+            };
+
+            if (objectTypeDefinitions != null) {
+                return generateFieldType(objectTypeDefinitions)
             } else if (interfaceTypeDefinitions != null) {
-                const defNode = interfaceTypeDefinitions[0];
-                const importPath = join(
-                    context.importPrefix,
-                    relative(context.inputPath.toString(), defNode.loc!.source.name),
-                );
-                const importNames = dependencyMap.get(importPath);
-                if (importNames == null) {
-                    dependencyMap.set(importPath, new Set([defNode.name.value]));
-                } else {
-                    importNames.add(defNode.name.value);
-                }
-                return ts.createTypeReferenceNode(ts.createIdentifier(defNode.name.value), undefined);
+                return generateFieldType(interfaceTypeDefinitions);
             } else if (inputTypeDefinitions != null) {
-                const defNode = inputTypeDefinitions[0];
-                const importPath = join(
-                    context.importPrefix,
-                    relative(context.inputPath.toString(), defNode.loc!.source.name),
-                );
-                const importNames = dependencyMap.get(importPath);
-                if (importNames == null) {
-                    dependencyMap.set(importPath, new Set([defNode.name.value]));
-                } else {
-                    importNames.add(defNode.name.value);
-                }
-                return ts.createTypeReferenceNode(ts.createIdentifier(defNode.name.value), undefined);
+                return generateFieldType(inputTypeDefinitions);
             } else {
                 context.errors.push(
                     new GraphQLError(`Could not find any type declaration of: ${nameNode.value}`, nameNode),
@@ -172,11 +161,18 @@ function getResolveDirective(context: GeneratorContext, defNode: FieldDefinition
     return null;
 }
 
+function addResolversDirective(defNode: FieldDefinitionNode, resolversDirective: Maybe<ResolversDirective>): defNode is FieldDefinitionNode & { __gtg: { resolvers: Maybe<ResolversDirective> } } {
+    (defNode as FieldDefinitionNode & { __gtg: { resolvers: Maybe<ResolversDirective> } }).__gtg = {
+        resolvers: resolversDirective,
+    };
+    return true;
+}
+
 export function collectFieldDefinition(
     context: GeneratorContext,
     typeName: string,
     defNode: FieldDefinitionNode | InputValueDefinitionNode,
-    _resolversDirective: Maybe<ResolversDirective>,
+    resolversDirective: Maybe<ResolversDirective>,
 ): void {
     const resolveDirective = defNode.kind === 'InputValueDefinition' ? null : getResolveDirective(context, defNode);
     if (resolveDirective == null) {
@@ -186,7 +182,9 @@ export function collectFieldDefinition(
             ? context.objectTypeFieldDefinitions.set(typeName, [defNode])
             : fieldDefinitions.push(defNode);
     } else if (defNode.kind === 'FieldDefinition') {
-        const fieldResolvers = context.fieldResolversMap.get(typeName);
-        fieldResolvers == null ? context.fieldResolversMap.set(typeName, [defNode]) : fieldResolvers.push(defNode);
+        if (addResolversDirective(defNode, resolversDirective)) {
+            const fieldResolvers = context.fieldResolversMap.get(typeName);
+            fieldResolvers == null ? context.fieldResolversMap.set(typeName, [defNode]) : fieldResolvers.push(defNode);
+        }
     }
 }
