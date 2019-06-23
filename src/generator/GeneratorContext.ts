@@ -15,17 +15,27 @@ import { ResolversDirective } from './objectTypes';
 const AUTO_GEN_HEADER = `THIS FILE IS AUTO-GENERATED.
 ANY MODIFICATION WILL BE DISCARDED UPON NEXT COMPILATION.`;
 
+interface DecoratedDefinitionNodeMetadata {
+    resolvers: Maybe<ResolversDirective>;
+}
+interface DecoratedDefinitionNode {
+    __gtg: DecoratedDefinitionNodeMetadata;
+}
+export type DecoratedFieldDefinitionNode = FieldDefinitionNode & DecoratedDefinitionNode;
+
 export class GeneratorContext {
     public readonly AUTO_GEN_HEADER: string;
 
-    public readonly importPrefix: string;
-    public readonly inputPath: PathLike;
-    public readonly outputPath: PathLike;
-    public readonly schema: GraphQLSchema;
-    public readonly document: DocumentNode;
     public readonly context: { importPath: string; importName: string } | null;
+    public readonly document: DocumentNode;
+    public readonly resolversOutputPath: PathLike;
+    public readonly resolversImportPrefix: string;
+    public readonly schema: GraphQLSchema;
+    public readonly schemaInputPath: PathLike;
+    public readonly typesImportPrefix: string;
+    public readonly typesOutputPath: PathLike;
 
-    public readonly fieldResolversMap: Map<string, (FieldDefinitionNode & { __gtg: { resolvers: Maybe<ResolversDirective> } })[]>;
+    public readonly fieldResolversMap: Map<string, DecoratedFieldDefinitionNode[]>;
     public readonly inputObjectTypeDefinitionsMap: Map<string, InputObjectTypeDefinitionNode[]>;
     public readonly interfaceTypeDefinitionsMap: Map<string, InterfaceTypeDefinitionNode[]>;
     public readonly objectTypeDefinitionsMap: Map<string, ObjectTypeDefinitionNode[]>;
@@ -34,22 +44,26 @@ export class GeneratorContext {
 
     public readonly errors: GraphQLError[];
 
-    public constructor(options: {
+    public constructor(opts: {
         AUTO_GEN_HEADER?: string;
-        inputPath: PathLike;
-        outputPath: PathLike;
-        document: DocumentNode;
-        schema: GraphQLSchema;
-        importPrefix: string;
         context: { importPath: string; importName: string } | null;
+        document: DocumentNode;
+        resolversImportPrefx: string;
+        resolversOutputPath: PathLike;
+        schema: GraphQLSchema;
+        schemaInputPath: PathLike;
+        typesImportPrefix: string;
+        typesOutputPath: PathLike;
     }) {
-        this.AUTO_GEN_HEADER = options.AUTO_GEN_HEADER || AUTO_GEN_HEADER;
-        this.importPrefix = options.importPrefix;
-        this.inputPath = options.inputPath;
-        this.outputPath = options.outputPath;
-        this.document = options.document;
-        this.schema = options.schema;
-        this.context = options.context;
+        this.AUTO_GEN_HEADER = opts.AUTO_GEN_HEADER || AUTO_GEN_HEADER;
+        this.context = opts.context;
+        this.document = opts.document;
+        this.schema = opts.schema;
+        this.schemaInputPath = opts.schemaInputPath;
+        this.resolversImportPrefix = opts.resolversImportPrefx;
+        this.resolversOutputPath = opts.resolversOutputPath;
+        this.typesImportPrefix = opts.typesImportPrefix;
+        this.typesOutputPath = opts.typesOutputPath;
 
         this.fieldResolversMap = new Map();
         this.inputObjectTypeDefinitionsMap = new Map();

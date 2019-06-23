@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
+import { GeneratorContext, DecoratedFieldDefinitionNode } from 'graphql-types-generator/generator/GeneratorContext';
 import { SourceFileDependencyMap } from 'graphql-types-generator/generator/utilities';
 import {
     FieldDefinitionNode,
@@ -15,8 +15,6 @@ import {
 } from 'graphql';
 import { relative, join } from 'path';
 import { ResolversDirective } from 'graphql-types-generator/generator/objectTypes';
-
-
 
 export function fieldNamedTypeMapper(
     context: GeneratorContext,
@@ -55,11 +53,13 @@ export function fieldNamedTypeMapper(
                 return ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
             }
 
-            const generateFieldType = (defNodes: ObjectTypeDefinitionNode[] | InterfaceTypeDefinitionNode[] | InputObjectTypeDefinitionNode[]): ts.TypeNode => {
+            const generateFieldType = (
+                defNodes: ObjectTypeDefinitionNode[] | InterfaceTypeDefinitionNode[] | InputObjectTypeDefinitionNode[],
+            ): ts.TypeNode => {
                 const defNode = defNodes[0];
                 const importPath = join(
-                    context.importPrefix,
-                    relative(context.inputPath.toString(), defNode.loc!.source.name),
+                    context.typesImportPrefix,
+                    relative(context.schemaInputPath.toString(), defNode.loc!.source.name),
                 );
                 const importNames = dependencyMap.get(importPath);
                 if (importNames == null) {
@@ -71,7 +71,7 @@ export function fieldNamedTypeMapper(
             };
 
             if (objectTypeDefinitions != null) {
-                return generateFieldType(objectTypeDefinitions)
+                return generateFieldType(objectTypeDefinitions);
             } else if (interfaceTypeDefinitions != null) {
                 return generateFieldType(interfaceTypeDefinitions);
             } else if (inputTypeDefinitions != null) {
@@ -161,8 +161,12 @@ function getResolveDirective(context: GeneratorContext, defNode: FieldDefinition
     return null;
 }
 
-function addResolversDirective(defNode: FieldDefinitionNode, resolversDirective: Maybe<ResolversDirective>): defNode is FieldDefinitionNode & { __gtg: { resolvers: Maybe<ResolversDirective> } } {
-    (defNode as FieldDefinitionNode & { __gtg: { resolvers: Maybe<ResolversDirective> } }).__gtg = {
+function addResolversDirective(
+    defNode: FieldDefinitionNode | DecoratedFieldDefinitionNode,
+    resolversDirective: Maybe<ResolversDirective>,
+): defNode is DecoratedFieldDefinitionNode {
+    (defNode as DecoratedFieldDefinitionNode).__gtg = {
+        ...(defNode as DecoratedFieldDefinitionNode).__gtg,
         resolvers: resolversDirective,
     };
     return true;

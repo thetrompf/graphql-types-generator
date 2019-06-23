@@ -1,13 +1,19 @@
-import { PathLike, readFile as readFileNode, readdir as readdirNode, stat as statNode, exists as existsNode, mkdir as mkdirNode } from 'fs';
+import {
+    PathLike,
+    readFile as readFileNode,
+    readdir as readdirNode,
+    stat as statNode,
+    exists as existsNode,
+    mkdir as mkdirNode,
+} from 'fs';
 import { concatAST, buildASTSchema, DocumentNode, Source, parse as parseGraphQL, printSchema } from 'graphql';
 import { promisify } from 'util';
 import { join } from 'path';
 import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
 import { visitor } from 'graphql-types-generator/generator/visitor';
 import { printSourceFile, writeFile } from 'graphql-types-generator/generator/printSoruceFile';
-import { generateResolverType } from 'graphql-types-generator/generator/resolver';
 import { generateObjectTypeDefinitions } from 'graphql-types-generator/generator/objectTypes';
-import { updateResolvers } from 'graphql-types-generator/generator/resolverType';
+import { generateResolverType, updateResolvers } from 'graphql-types-generator/generator/resolverType';
 
 const readFile = promisify(readFileNode);
 const readdir = promisify(readdirNode);
@@ -16,41 +22,48 @@ const exists = promisify(existsNode);
 const mkdir = promisify(mkdirNode);
 
 export interface GeneratorOptions {
-    inputPath: PathLike,
-    outputPath: PathLike,
-    importPrefix?: string,
-    contextImport?: string,
+    schemaInputPath: PathLike;
+    typesOutputPath: PathLike;
+    typesImportPrefix?: string;
+    resolversImportPrefix?: string;
+    resolversOutputPath: PathLike;
+    contextImportSpec?: string;
 }
 
 export async function generate(opts: GeneratorOptions): Promise<void> {
-    if (!await exists(opts.outputPath)) {
-        await mkdir(opts.outputPath, {
+    if (!(await exists(opts.typesOutputPath))) {
+        await mkdir(opts.typesOutputPath, {
             recursive: true,
         });
     }
 
-    const stats = await stat(opts.inputPath);
+    const stats = await stat(opts.schemaInputPath);
     const document = await (stats.isDirectory()
-        ? concatAST(await findSchemasFromDirectory(opts.inputPath))
-        : parse(opts.inputPath));
+        ? concatAST(await findSchemasFromDirectory(opts.schemaInputPath))
+        : parse(opts.schemaInputPath));
 
     const schema = buildASTSchema(document, {
         assumeValidSDL: true,
     });
 
-    const contextImportParts = opts.contextImport == null ? null : opts.contextImport.split('#');
-    const contextImport: Maybe<{ importPath: string, importName: string }> = contextImportParts == null ? null : {
-        importName: contextImportParts[1] || 'default',
-        importPath: contextImportParts[0],
-    };
+    const contextImportParts = opts.contextImportSpec == null ? null : opts.contextImportSpec.split('#');
+    const contextImport: Maybe<{ importPath: string; importName: string }> =
+        contextImportParts == null
+            ? null
+            : {
+                  importName: contextImportParts[1] || 'default',
+                  importPath: contextImportParts[0],
+              };
 
     const context = new GeneratorContext({
-        importPrefix: opts.importPrefix || './',
-        inputPath: opts.inputPath,
-        outputPath: opts.outputPath,
+        context: contextImport,
         document: document,
         schema: schema,
-        context: contextImport,
+        schemaInputPath: opts.schemaInputPath,
+        resolversImportPrefx: opts.resolversImportPrefix || './',
+        resolversOutputPath: opts.resolversOutputPath,
+        typesImportPrefix: opts.typesImportPrefix || './',
+        typesOutputPath: opts.typesOutputPath,
     });
 
     visitor(context);
@@ -60,7 +73,7 @@ export async function generate(opts: GeneratorOptions): Promise<void> {
         throw context;
     }
 
-    await printSourceFile(context, join(context.outputPath.toString(), 'index.ts'), generateResolverType(context));
+    await printSourceFile(context, join(context.typesOutputPath.toString(), 'index.ts'), generateResolverType(context));
     await generateObjectTypeDefinitions(context);
 
     if (context.hasErrors) {
@@ -69,7 +82,7 @@ export async function generate(opts: GeneratorOptions): Promise<void> {
 
     await updateResolvers(context);
 
-    await writeFile(join(context.outputPath.toString(), 'schema.graphql'), printSchema(schema), {
+    await writeFile(join(context.typesOutputPath.toString(), 'schema.graphql'), printSchema(schema), {
         flag: 'w+',
         mode: 0o644,
         encoding: 'utf8',

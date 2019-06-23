@@ -9,5 +9,11 @@
     "license": "MIT",
     "main": "index.js",
     "name": "graphql-types-generator",
+    "optionalDependencies": {
+        "prettier": ">=1.5 <2.0"
+    },
+    "peerDependencies": {
+        "typescript": ">=2.7 <4.0"
+    },
     "version": "1.0.0-0"
 }

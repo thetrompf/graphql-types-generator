@@ -4,10 +4,12 @@ const { GeneratorContext } = require('graphql-types-generator/generator/Generato
 const { GraphQLError, printError } = require('graphql');
 const { join } = require('path');
 generate({
-    inputPath: join(__dirname, '..', 'schemas'),
-    outputPath: join(__dirname, '..', 'src', 'generated', 'schemas'),
-    importPrefix: 'graphql-types-generator/schemas',
-    contextImport: 'graphql-types-generator/Context#Context',
+    contextImportSpec: 'graphql-types-generator/Context#Context',
+    schemaInputPath: join(__dirname, '..', 'schemas'),
+    resolversImportPrefix: 'graphql-types-generator',
+    resolversOutputPath: join(__dirname, '..', 'src', 'resolvers'),
+    typesImportPrefix: 'graphql-types-generator/schemas',
+    typesOutputPath: join(__dirname, '..', 'src', 'generated', 'schemas'),
 }).catch(err => {
     if (err instanceof GeneratorContext) {
         err.errors.forEach(error => console.error(printError(error)));
