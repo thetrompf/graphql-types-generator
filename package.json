@@ -26,6 +26,8 @@
   "name": "graphql-types-generator",
   "private": true,
   "scripts": {
+    "app:compile": "tsc -p tsconfig.app.json",
+    "app:watch": "tsc -w -p tsconfig.app.json",
     "generator:compile": "tsc -p tsconfig.generator.json",
     "generator:watch": "tsc -w -p tsconfig.generator.json"
   },
