@@ -3,6 +3,7 @@ import { SourceFileDependencyMap, withJSDoc } from 'graphql-types-generator/gene
 import { GeneratorContext, DecoratedFieldDefinitionNode } from 'graphql-types-generator/generator/GeneratorContext';
 import { SourceFileContent, printSourceFile } from 'graphql-types-generator/generator/printSoruceFile';
 import { fieldTypeMapper } from 'graphql-types-generator/generator/fieldMapper';
+import { transformResolvers } from 'graphql-types-generator/generator/transformers/resolvers';
 import { join } from 'path';
 import * as ts from 'typescript';
 import { promisify } from 'util';
@@ -260,25 +261,11 @@ export async function updateResolvers(context: GeneratorContext) {
         await carry;
         const sourceFile = await getTypescriptSourceFile(context, outputPath + '.ts');
 
-        const result = ts.transform(sourceFile, [
-            (tsContext: ts.TransformationContext) => rootNode => {
-                const visit = (node: ts.Node): ts.Node => {
-                    if (node.kind === ts.SyntaxKind.VariableDeclaration) {
-                        const name = ts.getNameOfDeclaration(node as ts.VariableDeclaration);
-                        if (name != null && name.kind === ts.SyntaxKind.Identifier && name.text === 'resolvers') {
-                            return ts.createIdentifier('resolverNew');
-                        }
-                    }
-                    return ts.visitEachChild(node, visit, tsContext);
-                };
-                rootNode.getChildren().map(node => {
-                    console.log(node);
-                });
-                return ts.visitNode(rootNode, visit);
-            },
-        ]);
+        const result = ts.transform(sourceFile, [transformResolvers(context)]);
 
-        return printSourceFile(result.transformed[0]);
+        return Promise.all(result.transformed.map(source => printSourceFile(source as ts.SourceFile))).then(
+            _ => void 0,
+        );
     }, Promise.resolve());
 }
 
