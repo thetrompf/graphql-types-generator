@@ -11,7 +11,7 @@ import { promisify } from 'util';
 import { join } from 'path';
 import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
 import { visitor } from 'graphql-types-generator/generator/visitor';
-import { printSourceFile, writeFile } from 'graphql-types-generator/generator/printSoruceFile';
+import { printSourceContent, writeFile } from 'graphql-types-generator/generator/printSoruceFile';
 import { generateObjectTypeDefinitions } from 'graphql-types-generator/generator/objectTypes';
 import { generateResolverType, updateResolvers } from 'graphql-types-generator/generator/resolverType';
 
@@ -73,7 +73,11 @@ export async function generate(opts: GeneratorOptions): Promise<void> {
         throw context;
     }
 
-    await printSourceFile(context, join(context.typesOutputPath.toString(), 'index.ts'), generateResolverType(context));
+    await printSourceContent(
+        context,
+        join(context.typesOutputPath.toString(), 'index.ts'),
+        generateResolverType(context),
+    );
     await generateObjectTypeDefinitions(context);
 
     if (context.hasErrors) {

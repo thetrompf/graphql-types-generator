@@ -1,9 +1,14 @@
+import { exists as existsNode, readFile as readFileNode } from 'fs';
 import { SourceFileDependencyMap, withJSDoc } from 'graphql-types-generator/generator/utilities';
 import { GeneratorContext, DecoratedFieldDefinitionNode } from 'graphql-types-generator/generator/GeneratorContext';
-import { SourceFileContent } from 'graphql-types-generator/generator/printSoruceFile';
-import * as ts from 'typescript';
-import { basename } from 'path';
+import { SourceFileContent, printSourceFile } from 'graphql-types-generator/generator/printSoruceFile';
 import { fieldTypeMapper } from 'graphql-types-generator/generator/fieldMapper';
+import { join } from 'path';
+import * as ts from 'typescript';
+import { promisify } from 'util';
+
+const exists = promisify(existsNode);
+const readFile = promisify(readFileNode);
 
 export type DeclaringType = string & { '': 'DeclaringType' };
 export type ResolverIdentifier = string & { '': 'ResolverIdentifier' };
@@ -155,13 +160,8 @@ export function trackResolvers(
     dependencyMap: SourceFileDependencyMap,
     resolversMap: ResolversMap,
 ): void {
-    const declaringType = basename(field.loc!.source.name, '.graphql');
-    const fieldName = field.name.value;
-    const fieldTypeName = fieldName[0].toUpperCase() + fieldName.slice(1);
-    const declaringTypeName = (declaringType === parentTypeName
-        ? parentTypeName
-        : declaringType + parentTypeName) as DeclaringType;
-    const resolverTypeIdentifier = (declaringTypeName + fieldTypeName + 'Resolver') as ResolverIdentifier;
+    const declaringTypeName = context.getDeclaringTypeName(field);
+    const resolverTypeIdentifier = context.getResolverTypeIdentifier(field);
 
     const currentDeclaredResolvers = resolversMap.get(declaringTypeName) || [];
     currentDeclaredResolvers.push([resolverTypeIdentifier, field]);
@@ -220,12 +220,76 @@ export function trackResolvers(
 }
 
 export async function updateResolvers(context: GeneratorContext) {
-    context.fieldResolversMap.forEach((fieldNodes, typeName) => {
-        console.log(typeName);
+    type ResolverOutputPath = string & { '': 'ResolverOutputPath' };
+
+    const resolverUpdaterMap = new Map<
+        ResolverOutputPath,
+        {
+            importPath: string;
+            parentTypeName: string;
+            resolverName: string;
+            resolverTypeIdentifier: string;
+        }[]
+    >();
+
+    context.fieldResolversMap.forEach(fieldNodes => {
         fieldNodes.forEach(field => {
-            const resolvers = field.__gtg.resolvers;
-            const importPath = resolvers == null ? field.loc!.source.name : resolvers.importPath;
-            console.log('  - ' + field.name.value + ' (' + importPath + ')');
+            const { parentTypeName, resolvers } = field.__gtg;
+            const importPath = join(
+                context.resolversImportPrefix,
+                resolvers == null ? parentTypeName : resolvers.importPath,
+            );
+            const outputPath = join(
+                context.resolversOutputPath.toString(),
+                resolvers == null ? parentTypeName : resolvers.importPath,
+            ) as ResolverOutputPath;
+
+            const updateEntities = resolverUpdaterMap.get(outputPath) || [];
+            const resolverTypeIdentifier = context.getResolverTypeIdentifier(field);
+            updateEntities.push({
+                importPath: importPath,
+                parentTypeName: parentTypeName,
+                resolverName: field.name.value,
+                resolverTypeIdentifier: resolverTypeIdentifier,
+            });
+            resolverUpdaterMap.set(outputPath, updateEntities);
         });
     });
+
+    return Array.from(resolverUpdaterMap.entries()).reduce(async (carry, [outputPath, _entries]) => {
+        await carry;
+        const sourceFile = await getTypescriptSourceFile(context, outputPath + '.ts');
+
+        const result = ts.transform(sourceFile, [
+            (tsContext: ts.TransformationContext) => rootNode => {
+                const visit = (node: ts.Node): ts.Node => {
+                    if (node.kind === ts.SyntaxKind.VariableDeclaration) {
+                        const name = ts.getNameOfDeclaration(node as ts.VariableDeclaration);
+                        if (name != null && name.kind === ts.SyntaxKind.Identifier && name.text === 'resolvers') {
+                            return ts.createIdentifier('resolverNew');
+                        }
+                    }
+                    return ts.visitEachChild(node, visit, tsContext);
+                };
+                rootNode.getChildren().map(node => {
+                    console.log(node);
+                });
+                return ts.visitNode(rootNode, visit);
+            },
+        ]);
+
+        return printSourceFile(result.transformed[0]);
+    }, Promise.resolve());
+}
+
+async function getTypescriptSourceFile(context: GeneratorContext, outputPath: string) {
+    const sourceFileExists = await exists(outputPath);
+    const sourceContent = sourceFileExists ? await readFile(outputPath) : '';
+    return ts.createSourceFile(
+        outputPath,
+        sourceContent.toString(),
+        context.targetLanguageVersion,
+        undefined,
+        ts.ScriptKind.TS,
+    );
 }

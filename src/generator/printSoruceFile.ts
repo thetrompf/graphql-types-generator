@@ -47,7 +47,7 @@ export interface SourceFileContent {
     dependencies?: SourceFileDependencyMap | null;
 }
 
-export async function printSourceFile(
+export async function printSourceContent(
     context: GeneratorContext,
     outputPath: PathLike,
     content: SourceFileContent,
@@ -55,7 +55,7 @@ export async function printSourceFile(
     const sourceFile = ts.createSourceFile(
         outputPath.toString(),
         '',
-        ts.ScriptTarget.ES2018,
+        context.targetLanguageVersion,
         undefined,
         ts.ScriptKind.TS,
     );
@@ -93,6 +93,15 @@ export async function printSourceFile(
     );
 
     return writeFile(outputPath, generatedSource, {
+        flag: 'w+',
+        mode: 0o644,
+        encoding: 'utf8',
+    });
+}
+
+export async function printSourceFile(sourceFile: ts.SourceFile): Promise<void> {
+    const generatedSource = await formatCode(printer.printFile(sourceFile));
+    return writeFile(sourceFile.fileName, generatedSource, {
         flag: 'w+',
         mode: 0o644,
         encoding: 'utf8',

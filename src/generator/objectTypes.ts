@@ -5,7 +5,7 @@ import {
     ObjectTypeExtensionNode,
 } from 'graphql';
 import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
-import { printSourceFile } from 'graphql-types-generator/generator/printSoruceFile';
+import { printSourceContent } from 'graphql-types-generator/generator/printSoruceFile';
 import { fieldTypeMapper, collectFieldDefinition } from 'graphql-types-generator/generator/fieldMapper';
 import { SourceFileDependencyMap, withJSDoc } from 'graphql-types-generator/generator/utilities';
 import { join, relative } from 'path';
@@ -164,7 +164,7 @@ export function generateObjectTypeDefinitions(context: GeneratorContext): Promis
             // remove dependencies within same files from the external dependency map.
             dependencyMap.delete(join(context.typesImportPrefix, relativePath));
 
-            return printSourceFile(context, resultFilePath, {
+            return printSourceContent(context, resultFilePath, {
                 dependencies: dependencyMap,
                 nodes: tsNodes,
             });

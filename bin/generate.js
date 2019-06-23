@@ -6,7 +6,7 @@ const { join } = require('path');
 generate({
     contextImportSpec: 'graphql-types-generator/Context#Context',
     schemaInputPath: join(__dirname, '..', 'schemas'),
-    resolversImportPrefix: 'graphql-types-generator',
+    resolversImportPrefix: 'graphql-types-generator/resolvers',
     resolversOutputPath: join(__dirname, '..', 'src', 'resolvers'),
     typesImportPrefix: 'graphql-types-generator/schemas',
     typesOutputPath: join(__dirname, '..', 'src', 'generated', 'schemas'),

@@ -10,7 +10,7 @@ interface Node {
     id: ID!
 }
 
-extend type Query @resolvers(importPath: "resolvers/Relay/Query") {
+extend type Query @resolvers(importPath: "Relay/Query") {
     """
     The resolver for fetching a single
     node of implementing the Node interface.

@@ -10,7 +10,7 @@ export function collectInterfaceDefinitions(context: GeneratorContext, defNode: 
     } else {
         context.interfaceTypeDefinitionsMap.set(typeName, [defNode]);
     }
-    // const resolversDirective = getResolversDirective(context, defNode);
+
     if (defNode.fields != null) {
         defNode.fields.forEach(field => collectFieldDefinition(context, typeName, field, null));
     }

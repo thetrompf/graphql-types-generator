@@ -1,5 +1,9 @@
 import * as ts from 'typescript';
-import { GeneratorContext, DecoratedFieldDefinitionNode } from 'graphql-types-generator/generator/GeneratorContext';
+import {
+    GeneratorContext,
+    DecoratedFieldDefinitionNode,
+    OperationType,
+} from 'graphql-types-generator/generator/GeneratorContext';
 import { SourceFileDependencyMap } from 'graphql-types-generator/generator/utilities';
 import {
     FieldDefinitionNode,
@@ -172,6 +176,26 @@ function addResolversDirective(
     return true;
 }
 
+function addParentTypeName(
+    context: GeneratorContext,
+    defNode: FieldDefinitionNode | DecoratedFieldDefinitionNode,
+    parentTypeName: string,
+): defNode is DecoratedFieldDefinitionNode {
+    let operationType: OperationType =
+        parentTypeName === context.subscriptionTypeName
+            ? 'subscription'
+            : parentTypeName === context.mutationTypeName
+            ? 'mutation'
+            : 'query';
+
+    (defNode as DecoratedFieldDefinitionNode).__gtg = {
+        ...(defNode as DecoratedFieldDefinitionNode).__gtg,
+        parentTypeName: parentTypeName,
+        operationType: operationType,
+    };
+    return true;
+}
+
 export function collectFieldDefinition(
     context: GeneratorContext,
     typeName: string,
@@ -179,6 +203,11 @@ export function collectFieldDefinition(
     resolversDirective: Maybe<ResolversDirective>,
 ): void {
     const resolveDirective = defNode.kind === 'InputValueDefinition' ? null : getResolveDirective(context, defNode);
+
+    if (defNode.kind !== 'InputValueDefinition') {
+        addParentTypeName(context, defNode, typeName);
+    }
+
     if (resolveDirective == null) {
         const fieldDefinitions = context.objectTypeFieldDefinitions.get(typeName);
 

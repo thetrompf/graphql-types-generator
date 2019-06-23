@@ -16,7 +16,7 @@ type Profile implements Node {
     age: Int
 }
 
-extend type Viewer @resolvers(importPath: "resolvers/Profile/Viewer") {
+extend type Viewer @resolvers(importPath: "Profile/Viewer") {
     profile: Profile! @resolve
 }
 
@@ -58,7 +58,7 @@ type ChangeProfileNamePayload {
     profile: Profile!
 }
 
-extend type Mutation @resolver(importPath: "resolvers/Profile/Mutation") {
+extend type Mutation @resolvers(importPath: "Profile/Mutation") {
     """
     Create a new Profile.
     """

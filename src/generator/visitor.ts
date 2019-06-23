@@ -6,6 +6,7 @@ import {
 } from 'graphql-types-generator/generator/objectTypes';
 import { collectInterfaceDefinitions } from 'graphql-types-generator/generator/interfaceTypes';
 import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
+import { collectOperationType } from 'graphql-types-generator/generator/collectOperationType';
 
 export function visitor(context: GeneratorContext): void {
     const document = context.document;
@@ -29,6 +30,9 @@ function visitNode(context: GeneratorContext, typeInfo: TypeInfo, astNode: ASTNo
             },
             ObjectTypeExtension(node) {
                 collectTypeExtensions(context, node);
+            },
+            OperationTypeDefinition(node) {
+                collectOperationType(context, node);
             },
         }),
     );
