@@ -22,7 +22,6 @@
             "name": "Launch generator",
             "program": "${workspaceFolder}/bin/generate.js",
             "sourceMaps": true,
-            "stopOnEntry": true,
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
