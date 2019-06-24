@@ -1,8 +1,4 @@
-import { toGlobalId } from 'graphql-relay';
-import { ViewerQueryResolvers } from 'graphql-types-generator/schemas/Viewer.graphql';
-
+import { ViewerQueryResolvers } from 'graphql-types-generator/schemas/Query.graphql';
 export const resolvers: ViewerQueryResolvers = {
-    viewer: () => ({
-        id: toGlobalId('Viewer', String(1)),
-    }),
+    viewer: () => null as any,
 };

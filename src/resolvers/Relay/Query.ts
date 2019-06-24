@@ -1,6 +1,9 @@
-import { RelayQueryResolvers } from 'graphql-types-generator/schemas/Relay.graphql';
-
+import { RelayQueryResolvers } from 'graphql-types-generator/schemas/Query.graphql';
 export const resolvers: RelayQueryResolvers = {
-    node: () => null,
-    nodes: () => [],
+    node: (context, Query, args) => {
+        throw new Error('Not implemented yet!');
+    },
+    nodes: (context, Query, args) => {
+        throw new Error('Not implemented yet!');
+    },
 };

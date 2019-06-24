@@ -220,17 +220,25 @@ export function trackResolvers(
     );
 }
 
+export interface FieldResolverTransformObject {
+    importPath: string;
+    parentTypeName: string;
+    resolverName: string;
+    resolverTypeIdentifier: string;
+}
+
+export interface ResolverModuleTransformObject {
+    resolversTypeIdentifier: string;
+    importPath: string;
+    resolvers: FieldResolverTransformObject[];
+}
+
 export async function updateResolvers(context: GeneratorContext) {
     type ResolverOutputPath = string & { '': 'ResolverOutputPath' };
 
     const resolverUpdaterMap = new Map<
         ResolverOutputPath,
-        {
-            importPath: string;
-            parentTypeName: string;
-            resolverName: string;
-            resolverTypeIdentifier: string;
-        }[]
+        FieldResolverTransformObject[]
     >();
 
     context.fieldResolversMap.forEach(fieldNodes => {
@@ -257,11 +265,18 @@ export async function updateResolvers(context: GeneratorContext) {
         });
     });
 
-    return Array.from(resolverUpdaterMap.entries()).reduce(async (carry, [outputPath, _entries]) => {
+    return Array.from(resolverUpdaterMap.entries()).reduce(async (carry, [outputPath, transformObjects]) => {
         await carry;
         const sourceFile = await getTypescriptSourceFile(context, outputPath + '.ts');
 
-        const result = ts.transform(sourceFile, [transformResolvers(context)]);
+        const importPath = context.getResolversTypeImportPathFromResolversOutputPath(outputPath);
+        const resolversTypeIdentifier = context.getResolversTypeIdentifierFromResolversOutputPath(outputPath);
+
+        const result = ts.transform(sourceFile, [transformResolvers(context, {
+            importPath: importPath,
+            resolversTypeIdentifier: resolversTypeIdentifier,
+            resolvers: transformObjects
+        })]);
 
         return Promise.all(result.transformed.map(source => printSourceFile(source as ts.SourceFile))).then(
             _ => void 0,

@@ -9,10 +9,10 @@ import {
     ObjectTypeDefinitionNode,
     ObjectTypeExtensionNode,
 } from 'graphql';
+import { ResolversDirective } from 'graphql-types-generator/generator/objectTypes';
+import { DeclaringType, ResolverIdentifier } from 'graphql-types-generator/generator/resolverType';
 import { PathLike } from 'fs';
-import { ResolversDirective } from './objectTypes';
-import { basename } from 'path';
-import { DeclaringType, ResolverIdentifier } from './resolverType';
+import { basename, relative, sep, join } from 'path';
 import * as ts from 'typescript';
 
 const AUTO_GEN_HEADER = `THIS FILE IS AUTO-GENERATED.
@@ -204,6 +204,29 @@ extend type ${typeName} {
         } else {
             return `${declaringTypeName}${fieldTypeName}Resolver` as ResolverIdentifier;
         }
+    }
+
+    public getResolversTypeImportPathFromResolversOutputPath(resolverOutputPath: string): string {
+        return join(
+            this.typesImportPrefix,
+            this.getParentTypeFromResolversOutputPath(resolverOutputPath) + '.graphql',
+        );
+    }
+
+    public getParentTypeFromResolversOutputPath(resolverOutputPath: string): string {
+        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
+        const parts = relativePath.split(sep);
+        return parts[parts.length - 1];
+    }
+
+    public getDeclaringTypeFromResolversOutputPath(resolverOutputPath: string): string {
+        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
+        return relativePath.split(sep)[0];
+    }
+
+    public getResolversTypeIdentifierFromResolversOutputPath(resolverOutputPath: string): string {
+        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
+        return relativePath.replace(sep, '') + 'Resolvers';
     }
 
     public validate() {
