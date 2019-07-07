@@ -25,6 +25,7 @@ interface DecoratedDefinitionNodeMetadata {
     operationType: OperationType;
     parentTypeName: string;
 }
+
 interface DecoratedDefinitionNode {
     __gtg: DecoratedDefinitionNodeMetadata;
 }
@@ -33,7 +34,7 @@ export type DecoratedFieldDefinitionNode = FieldDefinitionNode & DecoratedDefini
 export class GeneratorContext {
     public readonly AUTO_GEN_HEADER: string;
 
-    public readonly context: { importPath: string; importName: string } | null;
+    public context: { importPath: string; importName: string } | null;
     public readonly document: DocumentNode;
     public readonly resolversOutputPath: PathLike;
     public readonly resolversImportPrefix: string;

@@ -3,7 +3,7 @@ import { SourceFileDependencyMap, withJSDoc } from 'graphql-types-generator/gene
 import { GeneratorContext, DecoratedFieldDefinitionNode } from 'graphql-types-generator/generator/GeneratorContext';
 import { SourceFileContent, printSourceFile } from 'graphql-types-generator/generator/printSoruceFile';
 import { fieldTypeMapper } from 'graphql-types-generator/generator/fieldMapper';
-import { transformResolvers } from 'graphql-types-generator/generator/transformers/resolvers';
+import { transformResolvers } from 'graphql-types-generator/generator/plugins/resolvers';
 import { join } from 'path';
 import * as ts from 'typescript';
 import { promisify } from 'util';

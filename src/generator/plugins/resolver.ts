@@ -4,6 +4,37 @@ import {
     ResolverModuleTransformObject,
     FieldResolverTransformObject,
 } from 'graphql-types-generator/generator/resolverType';
+import { GraphQLTypesGeneratorPlugin, GraphQLTypesPluginKind } from '../plugin';
+import { collectInputObjectTypeDefinitions, collectTypeDefinitions, collectTypeExtensions } from 'graphql-types-generator/generator/objectTypes';
+import { collectInterfaceDefinitions } from 'graphql-types-generator/generator/interfaceTypes';
+import { collectOperationType } from '../collectOperationType';
+
+interface ResolverPluginConfig {}
+
+export const plugin: GraphQLTypesGeneratorPlugin<ResolverPluginConfig> = {
+    config: null as any,
+    graphql: {
+        collect: (context) => ({
+            InputObjectTypeDefinition(node) {
+                collectInputObjectTypeDefinitions(context, node);
+            },
+            InterfaceTypeDefinition(node) {
+                collectInterfaceDefinitions(context, node);
+            },
+            ObjectTypeDefinition(node) {
+                collectTypeDefinitions(context, node);
+            },
+            ObjectTypeExtension(node) {
+                collectTypeExtensions(context, node);
+            },
+            OperationTypeDefinition(node) {
+                collectOperationType(context, node);
+            },
+        }),
+    },
+    // typescript: transformResolvers,
+    kind: GraphQLTypesPluginKind.TypeScript,
+};
 
 function createResovlerFunction(property: FieldResolverTransformObject) {
     return ts.createPropertyAssignment(

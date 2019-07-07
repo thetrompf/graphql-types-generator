@@ -73,7 +73,7 @@
     },
     "include": [
         "./src/generator.ts",
-        "./src/generator/*.ts",
+        "./src/generator/**/*.ts",
         "./typings/includes/**/*.d.ts",
     ]
 }

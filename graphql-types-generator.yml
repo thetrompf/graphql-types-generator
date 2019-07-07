@@ -1,0 +1,16 @@
+---
+plugins:
+  graphql-types-generator/generator/plugins/context:
+    importPath: graphql-types-generator/Context
+    importName: Context
+  graphql-types-generator/generator/plugins/dataloader:
+    importPrefix: graphql-types-generator/loaders
+    outputPath: ./src/dataloaders
+  graphql-types-generator/generator/plugins/resolver:
+    importPrefix: graphql-types-generator/resolvers
+    outputPath: ./src/resovlers
+  graphql-types-generator/generator/plugins/schema:
+    inputPath: ./schemas
+  graphql-types-generator/generator/plugins/typescript:
+    importPrefix: graphql-types-generator/schemas
+    outputPath: ./src/generated/schemas

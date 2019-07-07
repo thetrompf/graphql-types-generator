@@ -20,7 +20,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch generator",
-            "program": "${workspaceFolder}/bin/generate.js",
+            "program": "${workspaceFolder}/bin/graphql-types-generator.js",
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/**/*.js"

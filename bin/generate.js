@@ -3,6 +3,7 @@ const { generate } = require('graphql-types-generator/generator');
 const { GeneratorContext } = require('graphql-types-generator/generator/GeneratorContext');
 const { GraphQLError, printError } = require('graphql');
 const { join } = require('path');
+
 generate({
     contextImportSpec: 'graphql-types-generator/Context#Context',
     schemaInputPath: join(__dirname, '..', 'schemas'),
