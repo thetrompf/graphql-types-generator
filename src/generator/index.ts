@@ -9,17 +9,43 @@ import {
 import { concatAST, buildASTSchema, DocumentNode, Source, parse as parseGraphQL, printSchema } from 'graphql';
 import { promisify } from 'util';
 import { join } from 'path';
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
-import { visitor } from 'graphql-types-generator/generator/visitor';
-import { printSourceContent, writeFile } from 'graphql-types-generator/generator/printSoruceFile';
-import { generateObjectTypeDefinitions } from 'graphql-types-generator/generator/objectTypes';
-import { generateResolverType, updateResolvers } from 'graphql-types-generator/generator/resolverType';
+import { GeneratorContext } from 'graphql-types-generator/GeneratorContext';
+import { visitor } from 'graphql-types-generator/visitor';
+import { printSourceContent, writeFile } from 'graphql-types-generator/printSoruceFile';
+import { generateObjectTypeDefinitions } from 'graphql-types-generator/objectTypes';
+import { generateResolverType, updateResolvers } from 'graphql-types-generator/resolverType';
 
 const readFile = promisify(readFileNode);
 const readdir = promisify(readdirNode);
 const stat = promisify(statNode);
 const exists = promisify(existsNode);
 const mkdir = promisify(mkdirNode);
+
+async function parse(path: PathLike): Promise<DocumentNode> {
+    const schemaText = await readFile(path);
+    return parseGraphQL(new Source(Buffer.isBuffer(schemaText) ? schemaText.toString() : schemaText, path.toString()));
+}
+
+async function findSchemasFromDirectory(path: PathLike, result: DocumentNode[] = []): Promise<DocumentNode[]> {
+    const entries = await readdir(path);
+    const entriesAndStats = await Promise.all(
+        entries.map(async entry =>
+            stat(join(path.toString(), entry)).then(stats => ({ entry: join(path.toString(), entry), stats })),
+        ),
+    );
+    const promises: Promise<DocumentNode | DocumentNode[]>[] = [];
+    for (const e of entriesAndStats) {
+        if (e.stats.isDirectory()) {
+            promises.push(findSchemasFromDirectory(e.entry, result));
+        } else if (e.stats.isFile() && (e.entry.endsWith('.graphql') || e.entry.endsWith('.gql'))) {
+            promises.push(parse(e.entry));
+        }
+    }
+    await Promise.all(promises).then(res =>
+        res.forEach(r => (Array.isArray(r) ? r.forEach(r2 => result.push(r2)) : result.push(r))),
+    );
+    return result;
+}
 
 export interface GeneratorOptions {
     schemaInputPath: PathLike;
@@ -91,30 +117,4 @@ export async function generate(opts: GeneratorOptions): Promise<void> {
         mode: 0o644,
         encoding: 'utf8',
     });
-}
-
-async function parse(path: PathLike): Promise<DocumentNode> {
-    const schemaText = await readFile(path);
-    return parseGraphQL(new Source(Buffer.isBuffer(schemaText) ? schemaText.toString() : schemaText, path.toString()));
-}
-
-async function findSchemasFromDirectory(path: PathLike, result: DocumentNode[] = []): Promise<DocumentNode[]> {
-    const entries = await readdir(path);
-    const entriesAndStats = await Promise.all(
-        entries.map(async entry =>
-            stat(join(path.toString(), entry)).then(stats => ({ entry: join(path.toString(), entry), stats })),
-        ),
-    );
-    const promises: Promise<DocumentNode | DocumentNode[]>[] = [];
-    for (const e of entriesAndStats) {
-        if (e.stats.isDirectory()) {
-            promises.push(findSchemasFromDirectory(e.entry, result));
-        } else if (e.stats.isFile() && (e.entry.endsWith('.graphql') || e.entry.endsWith('.gql'))) {
-            promises.push(parse(e.entry));
-        }
-    }
-    await Promise.all(promises).then(res =>
-        res.forEach(r => (Array.isArray(r) ? r.forEach(r2 => result.push(r2)) : result.push(r))),
-    );
-    return result;
 }

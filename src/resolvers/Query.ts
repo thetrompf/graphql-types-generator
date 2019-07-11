@@ -1,4 +1,4 @@
-import { QueryResolvers } from 'graphql-types-generator/schemas/Query.graphql';
+import { QueryResolvers } from 'app/schemas-old/Query.graphql';
 import { toGlobalId } from 'graphql-relay';
 
 export const resolvers: QueryResolvers = {

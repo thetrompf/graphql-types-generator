@@ -1,38 +1,82 @@
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
-import * as ts from 'typescript';
+import { exists as existsNode, mkdir as mkdirNode } from 'fs';
+import { collectOperationType } from 'graphql-types-generator/collectOperationType';
+import { GeneratorContext } from 'graphql-types-generator/GeneratorContext';
+import { collectInterfaceDefinitions } from 'graphql-types-generator/interfaceTypes';
 import {
-    ResolverModuleTransformObject,
-    FieldResolverTransformObject,
-} from 'graphql-types-generator/generator/resolverType';
-import { GraphQLTypesGeneratorPlugin, GraphQLTypesPluginKind } from '../plugin';
-import { collectInputObjectTypeDefinitions, collectTypeDefinitions, collectTypeExtensions } from 'graphql-types-generator/generator/objectTypes';
-import { collectInterfaceDefinitions } from 'graphql-types-generator/generator/interfaceTypes';
-import { collectOperationType } from '../collectOperationType';
+    collectInputObjectTypeDefinitions,
+    collectTypeDefinitions,
+    collectTypeExtensions,
+} from 'graphql-types-generator/objectTypes';
+import { GraphQLTypesGeneratorPlugin, GraphQLTypesPluginKind } from 'graphql-types-generator/plugin';
+import { FieldResolverTransformObject, ResolverModuleTransformObject } from 'graphql-types-generator/resolverType';
+import * as ts from 'typescript';
+import { promisify } from 'util';
 
-interface ResolverPluginConfig {}
+const mkdir = promisify(mkdirNode);
+const exist = promisify(existsNode);
+
+interface ResolverPluginConfig {
+    importPrefix: string;
+    outputPath: string;
+}
 
 export const plugin: GraphQLTypesGeneratorPlugin<ResolverPluginConfig> = {
-    config: null as any,
-    graphql: {
-        collect: (context) => ({
-            InputObjectTypeDefinition(node) {
-                collectInputObjectTypeDefinitions(context, node);
-            },
-            InterfaceTypeDefinition(node) {
-                collectInterfaceDefinitions(context, node);
-            },
-            ObjectTypeDefinition(node) {
-                collectTypeDefinitions(context, node);
-            },
-            ObjectTypeExtension(node) {
-                collectTypeExtensions(context, node);
-            },
-            OperationTypeDefinition(node) {
-                collectOperationType(context, node);
-            },
-        }),
+    configure(_context, config) {
+        if (
+            typeof config !== 'object' ||
+            config == null ||
+            typeof (config as Partial<ResolverPluginConfig>).importPrefix !== 'string' ||
+            typeof (config as Partial<ResolverPluginConfig>).outputPath !== 'string'
+        ) {
+            throw new Error(`[graphql-types-generator/plugins/resolver] must provide importPrefix, outputPath config parameters e.g.:
+
+Relative import path.
+--- # graphql-types-generator.yml
+plugins:
+  generator-types-generator/plugins/resolver:
+    importPrefix: ./src/resolvers
+    outputPath: ./src/resolvers
+
+
+Absolute or mapped import path.
+--- # graphql-types-generator.yml
+plugins:
+  generator-types-generator/plugins/resolver:
+    importPrefix: graphql-app/resolvers
+    outputPath: ./src/resolvers
+
+
+`);
+        }
     },
-    // typescript: transformResolvers,
+    graphql: {
+        collect(context) {
+            return {
+                InputObjectTypeDefinition(node) {
+                    collectInputObjectTypeDefinitions(context, node);
+                },
+                InterfaceTypeDefinition(node) {
+                    collectInterfaceDefinitions(context, node);
+                },
+                ObjectTypeDefinition(node) {
+                    collectTypeDefinitions(context, node);
+                },
+                ObjectTypeExtension(node) {
+                    collectTypeExtensions(context, node);
+                },
+                OperationTypeDefinition(node) {
+                    collectOperationType(context, node);
+                },
+            };
+        },
+    },
+    filesystem: {
+        async initial(_context, config) {
+            if (!(await exist(config.outputPath))) {
+                await mkdir(config.outputPath);
+            }
+        },
+    },
     kind: GraphQLTypesPluginKind.TypeScript,
 };
 
@@ -191,7 +235,7 @@ export function transformResolvers(_gContext: GeneratorContext, transformObject:
                 }
             }
 
-            function visitResolverProperties(node: ts.Node): ts.VisitResult<ts.Node>{
+            function visitResolverProperties(node: ts.Node): ts.VisitResult<ts.Node> {
                 switch (node.kind) {
                     case ts.SyntaxKind.PropertyAssignment:
                         if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name)) {
@@ -205,21 +249,41 @@ export function transformResolvers(_gContext: GeneratorContext, transformObject:
                 const result = ts.visitEachChild(node, visitResolverProperties, context);
                 const missingResolvers = transformObject.resolvers.filter(r => !resolverProperties.has(r.resolverName));
                 const resolvers = missingResolvers.map(createResovlerFunction);
-                return ts.updateObjectLiteral(result as ts.ObjectLiteralExpression, [
-                    ...(result as ts.ObjectLiteralExpression).properties,
-                    ...resolvers,
-                ].sort((a: ts.ObjectLiteralElementLike, b: ts.ObjectLiteralElementLike) => {
-                    const aName = a.name == null ? '' : ts.isIdentifier(a.name) || ts.isNumericLiteral(a.name) || ts.isStringLiteral(a.name) ? a.name.text : ts.isComputedPropertyName(a.name) ? String(a.name.expression) : a.name;
-                    const bName = b.name == null ? '' : ts.isIdentifier(b.name) || ts.isNumericLiteral(b.name) || ts.isStringLiteral(b.name) ? b.name.text : ts.isComputedPropertyName(b.name) ? String(b.name.expression) : b.name;
+                return ts.updateObjectLiteral(
+                    result as ts.ObjectLiteralExpression,
+                    [...(result as ts.ObjectLiteralExpression).properties, ...resolvers].sort(
+                        (a: ts.ObjectLiteralElementLike, b: ts.ObjectLiteralElementLike) => {
+                            const aName =
+                                a.name == null
+                                    ? ''
+                                    : ts.isIdentifier(a.name) ||
+                                      ts.isNumericLiteral(a.name) ||
+                                      ts.isStringLiteral(a.name)
+                                    ? a.name.text
+                                    : ts.isComputedPropertyName(a.name)
+                                    ? String(a.name.expression)
+                                    : a.name;
+                            const bName =
+                                b.name == null
+                                    ? ''
+                                    : ts.isIdentifier(b.name) ||
+                                      ts.isNumericLiteral(b.name) ||
+                                      ts.isStringLiteral(b.name)
+                                    ? b.name.text
+                                    : ts.isComputedPropertyName(b.name)
+                                    ? String(b.name.expression)
+                                    : b.name;
 
-                    if (aName > bName) {
-                        return 1;
-                    } else if (aName < bName) {
-                        return -1;
-                    } else {
-                        return 0;
-                    }
-                }));
+                            if (aName > bName) {
+                                return 1;
+                            } else if (aName < bName) {
+                                return -1;
+                            } else {
+                                return 0;
+                            }
+                        },
+                    ),
+                );
             }
         };
     };

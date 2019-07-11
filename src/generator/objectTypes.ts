@@ -4,10 +4,10 @@ import {
     ObjectTypeDefinitionNode,
     ObjectTypeExtensionNode,
 } from 'graphql';
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
-import { printSourceContent } from 'graphql-types-generator/generator/printSoruceFile';
-import { fieldTypeMapper, collectFieldDefinition } from 'graphql-types-generator/generator/fieldMapper';
-import { SourceFileDependencyMap, withJSDoc } from 'graphql-types-generator/generator/utilities';
+import { GeneratorContext } from 'graphql-types-generator/GeneratorContext';
+import { printSourceContent } from 'graphql-types-generator/printSoruceFile';
+import { fieldTypeMapper, collectFieldDefinition } from 'graphql-types-generator/fieldMapper';
+import { SourceFileDependencyMap, withJSDoc } from 'graphql-types-generator/utilities';
 import { join, relative } from 'path';
 import * as ts from 'typescript';
 import {
@@ -15,25 +15,11 @@ import {
     DeclaringType,
     trackResolvers,
     generateResolverTypes,
-} from 'graphql-types-generator/generator/resolverType';
+} from 'graphql-types-generator/resolverType';
 
 export interface ResolversDirective {
     importPath: string;
     typeName: string;
-}
-
-export function collectTypeDefinitions(context: GeneratorContext, defNode: ObjectTypeDefinitionNode): void {
-    const typeName = defNode.name.value;
-    const existingType = context.objectTypeDefinitionsMap.get(typeName);
-    if (existingType != null) {
-        existingType.push(defNode);
-    } else {
-        context.objectTypeDefinitionsMap.set(typeName, [defNode]);
-    }
-    const resolversDirective = getResolversDirective(context, defNode);
-    if (defNode.fields != null) {
-        defNode.fields.forEach(field => collectFieldDefinition(context, typeName, field, resolversDirective));
-    }
 }
 
 function getResolversDirective(
@@ -65,6 +51,20 @@ function getResolversDirective(
                 };
             }
         }
+    }
+}
+
+export function collectTypeDefinitions(context: GeneratorContext, defNode: ObjectTypeDefinitionNode): void {
+    const typeName = defNode.name.value;
+    const existingType = context.objectTypeDefinitionsMap.get(typeName);
+    if (existingType != null) {
+        existingType.push(defNode);
+    } else {
+        context.objectTypeDefinitionsMap.set(typeName, [defNode]);
+    }
+    const resolversDirective = getResolversDirective(context, defNode);
+    if (defNode.fields != null) {
+        defNode.fields.forEach(field => collectFieldDefinition(context, typeName, field, resolversDirective));
     }
 }
 
@@ -169,5 +169,5 @@ export function generateObjectTypeDefinitions(context: GeneratorContext): Promis
                 nodes: tsNodes,
             });
         }),
-    ).then(_ => void 0);
+    ).then(() => void 0);
 }

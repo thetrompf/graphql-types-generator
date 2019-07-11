@@ -1,6 +1,6 @@
 import { InterfaceTypeDefinitionNode } from 'graphql';
-import { collectFieldDefinition } from 'graphql-types-generator/generator/fieldMapper';
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
+import { collectFieldDefinition } from 'graphql-types-generator/fieldMapper';
+import { GeneratorContext } from 'graphql-types-generator/GeneratorContext';
 
 export function collectInterfaceDefinitions(context: GeneratorContext, defNode: InterfaceTypeDefinitionNode): void {
     const typeName = defNode.name.value;

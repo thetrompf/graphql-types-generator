@@ -1,4 +1,4 @@
-import { MutationResolvers } from 'graphql-types-generator/schemas/Mutation.graphql';
+import { MutationResolvers } from 'app/schemas-old/Mutation.graphql';
 import { toGlobalId } from 'graphql-relay';
 export const resolvers: MutationResolvers = {
     createNode: () => ({

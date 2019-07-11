@@ -1,8 +1,8 @@
 import * as ts from 'typescript';
 import { PathLike, writeFile as writeFileNode } from 'fs';
 import { promisify } from 'util';
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
-import { withComment, SourceFileDependencyMap } from 'graphql-types-generator/generator/utilities';
+import { GeneratorContext } from 'graphql-types-generator/GeneratorContext';
+import { withComment, SourceFileDependencyMap } from 'graphql-types-generator/utilities';
 import { Options as PrettierOptions } from 'prettier';
 
 type Prettier = typeof import('prettier');

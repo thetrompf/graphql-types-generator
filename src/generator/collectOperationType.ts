@@ -1,4 +1,4 @@
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
+import { GeneratorContext } from 'graphql-types-generator/GeneratorContext';
 import { OperationTypeDefinitionNode } from 'graphql';
 
 export function collectOperationType(context: GeneratorContext, defNode: OperationTypeDefinitionNode): void {

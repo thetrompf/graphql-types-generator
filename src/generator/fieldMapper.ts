@@ -3,8 +3,8 @@ import {
     GeneratorContext,
     DecoratedFieldDefinitionNode,
     OperationType,
-} from 'graphql-types-generator/generator/GeneratorContext';
-import { SourceFileDependencyMap } from 'graphql-types-generator/generator/utilities';
+} from 'graphql-types-generator/GeneratorContext';
+import { SourceFileDependencyMap, assertSourceLocation } from 'graphql-types-generator/utilities';
 import {
     FieldDefinitionNode,
     GraphQLError,
@@ -18,7 +18,7 @@ import {
     InputObjectTypeDefinitionNode,
 } from 'graphql';
 import { relative, join } from 'path';
-import { ResolversDirective } from 'graphql-types-generator/generator/objectTypes';
+import { ResolversDirective } from 'graphql-types-generator/objectTypes';
 
 export function fieldNamedTypeMapper(
     context: GeneratorContext,
@@ -63,7 +63,7 @@ export function fieldNamedTypeMapper(
                 const defNode = defNodes[0];
                 const importPath = join(
                     context.typesImportPrefix,
-                    relative(context.schemaInputPath.toString(), defNode.loc!.source.name),
+                    relative(context.schemaInputPath.toString(), assertSourceLocation(defNode).loc.source.name),
                 );
                 const importNames = dependencyMap.get(importPath);
                 if (importNames == null) {
@@ -100,7 +100,7 @@ export function fieldNonNullTypeMapper(
         case 'ListType':
             return ts.createArrayTypeNode(fieldTypeMapper(context, typeNode.type, externalResources));
         default:
-            context.errors.push(new GraphQLError(`Invalid NonNullable TypeNode kind: ${typeNode!.kind}`));
+            context.errors.push(new GraphQLError(`Invalid NonNullable TypeNode kind: ${(typeNode as any).kind}`));
             return null as never;
     }
 }
@@ -120,7 +120,7 @@ export function fieldTypeMapper(
                 fieldNamedTypeMapper(context, typeNode.name, externalResources),
             ]);
         default:
-            context.errors.push(new GraphQLError(`Unknown TypeNode kind: ${typeNode!.kind}`));
+            context.errors.push(new GraphQLError(`Unknown TypeNode kind: ${(typeNode as any).kind}`));
             return null as never;
     }
 }

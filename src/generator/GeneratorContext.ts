@@ -1,3 +1,4 @@
+import { PathLike } from 'fs';
 import {
     DocumentNode,
     FieldDefinitionNode,
@@ -9,11 +10,11 @@ import {
     ObjectTypeDefinitionNode,
     ObjectTypeExtensionNode,
 } from 'graphql';
-import { ResolversDirective } from 'graphql-types-generator/generator/objectTypes';
-import { DeclaringType, ResolverIdentifier } from 'graphql-types-generator/generator/resolverType';
-import { PathLike } from 'fs';
-import { basename, relative, sep, join } from 'path';
+import { ResolversDirective } from 'graphql-types-generator/objectTypes';
+import { DeclaringType, ResolverIdentifier } from 'graphql-types-generator/resolverType';
+import { basename, join, relative, sep } from 'path';
 import * as ts from 'typescript';
+import { assertSourceLocation } from 'graphql-types-generator/utilities';
 
 const AUTO_GEN_HEADER = `THIS FILE IS AUTO-GENERATED.
 ANY MODIFICATION WILL BE DISCARDED UPON NEXT COMPILATION.`;
@@ -32,6 +33,9 @@ interface DecoratedDefinitionNode {
 export type DecoratedFieldDefinitionNode = FieldDefinitionNode & DecoratedDefinitionNode;
 
 export class GeneratorContext {
+    public get hasErrors() {
+        return this.errors.length > 0;
+    }
     public readonly AUTO_GEN_HEADER: string;
 
     public context: { importPath: string; importName: string } | null;
@@ -90,10 +94,6 @@ export class GeneratorContext {
         this.errors = [];
     }
 
-    public get hasErrors() {
-        return this.errors.length > 0;
-    }
-
     public getTypeDefinitionMap(): Map<
         string,
         Set<InputObjectTypeDefinitionNode | InterfaceTypeDefinitionNode | ObjectTypeDefinitionNode>
@@ -118,7 +118,7 @@ export class GeneratorContext {
                                     | InterfaceTypeDefinitionNode
                                     | ObjectTypeDefinitionNode,
                             ) => {
-                                const sourcePath = defNode.loc!.source.name;
+                                const sourcePath = assertSourceLocation(defNode).loc.source.name;
                                 const nodes = result.get(sourcePath) || new Set();
                                 nodes.add(defNode);
                                 result.set(sourcePath, nodes);
@@ -127,6 +127,57 @@ export class GeneratorContext {
                 ),
         );
         return result;
+    }
+
+    public getDeclaringSource(field: DecoratedFieldDefinitionNode) {
+        return basename(assertSourceLocation(field).loc.source.name, '.graphql');
+    }
+
+    public getDeclaringTypeName(field: DecoratedFieldDefinitionNode) {
+        const declaringType = this.getDeclaringSource(field);
+        const parentTypeName = field.__gtg.parentTypeName;
+        return (declaringType === parentTypeName ? parentTypeName : declaringType + parentTypeName) as DeclaringType;
+    }
+
+    public getResolverTypeIdentifier(field: DecoratedFieldDefinitionNode): ResolverIdentifier {
+        const parentTypeName = field.__gtg.parentTypeName;
+
+        const fieldName = field.name.value;
+        const fieldTypeName = fieldName[0].toUpperCase() + fieldName.slice(1);
+        const declaringTypeName = this.getDeclaringTypeName(field);
+
+        if (parentTypeName === this.mutationTypeName) {
+            return `${fieldTypeName}Mutation` as ResolverIdentifier;
+        } else if (parentTypeName === this.subscriptionTypeName) {
+            return `${fieldTypeName}Subscription` as ResolverIdentifier;
+        } else {
+            return `${declaringTypeName}${fieldTypeName}Resolver` as ResolverIdentifier;
+        }
+    }
+
+    public getResolversTypeImportPathFromResolversOutputPath(resolverOutputPath: string): string {
+        return join(this.typesImportPrefix, this.getParentTypeFromResolversOutputPath(resolverOutputPath) + '.graphql');
+    }
+
+    public getParentTypeFromResolversOutputPath(resolverOutputPath: string): string {
+        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
+        const parts = relativePath.split(sep);
+        return parts[parts.length - 1];
+    }
+
+    public getDeclaringTypeFromResolversOutputPath(resolverOutputPath: string): string {
+        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
+        return relativePath.split(sep)[0];
+    }
+
+    public getResolversTypeIdentifierFromResolversOutputPath(resolverOutputPath: string): string {
+        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
+        return relativePath.replace(sep, '') + 'Resolvers';
+    }
+
+    public validate() {
+        this.validateObjectTypeDefinitions();
+        this.validateFieldDefinitions();
     }
 
     private validateFieldDefinitions() {
@@ -179,59 +230,5 @@ extend type ${typeName} {
                 );
             }
         });
-    }
-
-    public getDeclaringSource(field: DecoratedFieldDefinitionNode) {
-        return basename(field.loc!.source.name, '.graphql');
-    }
-
-    public getDeclaringTypeName(field: DecoratedFieldDefinitionNode) {
-        const declaringType = this.getDeclaringSource(field);
-        const parentTypeName = field.__gtg.parentTypeName;
-        return (declaringType === parentTypeName ? parentTypeName : declaringType + parentTypeName) as DeclaringType;
-    }
-
-    public getResolverTypeIdentifier(field: DecoratedFieldDefinitionNode): ResolverIdentifier {
-        const parentTypeName = field.__gtg.parentTypeName;
-
-        const fieldName = field.name.value;
-        const fieldTypeName = fieldName[0].toUpperCase() + fieldName.slice(1);
-        const declaringTypeName = this.getDeclaringTypeName(field);
-
-        if (parentTypeName === this.mutationTypeName) {
-            return `${fieldTypeName}Mutation` as ResolverIdentifier;
-        } else if (parentTypeName === this.subscriptionTypeName) {
-            return `${fieldTypeName}Subscription` as ResolverIdentifier;
-        } else {
-            return `${declaringTypeName}${fieldTypeName}Resolver` as ResolverIdentifier;
-        }
-    }
-
-    public getResolversTypeImportPathFromResolversOutputPath(resolverOutputPath: string): string {
-        return join(
-            this.typesImportPrefix,
-            this.getParentTypeFromResolversOutputPath(resolverOutputPath) + '.graphql',
-        );
-    }
-
-    public getParentTypeFromResolversOutputPath(resolverOutputPath: string): string {
-        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
-        const parts = relativePath.split(sep);
-        return parts[parts.length - 1];
-    }
-
-    public getDeclaringTypeFromResolversOutputPath(resolverOutputPath: string): string {
-        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
-        return relativePath.split(sep)[0];
-    }
-
-    public getResolversTypeIdentifierFromResolversOutputPath(resolverOutputPath: string): string {
-        const relativePath = relative(this.resolversOutputPath.toString(), resolverOutputPath);
-        return relativePath.replace(sep, '') + 'Resolvers';
-    }
-
-    public validate() {
-        this.validateObjectTypeDefinitions();
-        this.validateFieldDefinitions();
     }
 }

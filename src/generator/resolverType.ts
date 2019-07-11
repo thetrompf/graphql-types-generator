@@ -1,15 +1,27 @@
 import { exists as existsNode, readFile as readFileNode } from 'fs';
-import { SourceFileDependencyMap, withJSDoc } from 'graphql-types-generator/generator/utilities';
-import { GeneratorContext, DecoratedFieldDefinitionNode } from 'graphql-types-generator/generator/GeneratorContext';
-import { SourceFileContent, printSourceFile } from 'graphql-types-generator/generator/printSoruceFile';
-import { fieldTypeMapper } from 'graphql-types-generator/generator/fieldMapper';
-import { transformResolvers } from 'graphql-types-generator/generator/plugins/resolvers';
+import { SourceFileDependencyMap, withJSDoc } from 'graphql-types-generator/utilities';
+import { GeneratorContext, DecoratedFieldDefinitionNode } from 'graphql-types-generator/GeneratorContext';
+import { SourceFileContent, printSourceFile } from 'graphql-types-generator/printSoruceFile';
+import { fieldTypeMapper } from 'graphql-types-generator/fieldMapper';
+import { transformResolvers } from 'graphql-types-generator/plugins/resolver';
 import { join } from 'path';
 import * as ts from 'typescript';
 import { promisify } from 'util';
 
 const exists = promisify(existsNode);
 const readFile = promisify(readFileNode);
+
+async function getTypescriptSourceFile(context: GeneratorContext, outputPath: string) {
+    const sourceFileExists = await exists(outputPath);
+    const sourceContent = sourceFileExists ? await readFile(outputPath) : '';
+    return ts.createSourceFile(
+        outputPath,
+        sourceContent.toString(),
+        context.targetLanguageVersion,
+        undefined,
+        ts.ScriptKind.TS,
+    );
+}
 
 export type DeclaringType = string & { '': 'DeclaringType' };
 export type ResolverIdentifier = string & { '': 'ResolverIdentifier' };
@@ -236,10 +248,7 @@ export interface ResolverModuleTransformObject {
 export async function updateResolvers(context: GeneratorContext) {
     type ResolverOutputPath = string & { '': 'ResolverOutputPath' };
 
-    const resolverUpdaterMap = new Map<
-        ResolverOutputPath,
-        FieldResolverTransformObject[]
-    >();
+    const resolverUpdaterMap = new Map<ResolverOutputPath, FieldResolverTransformObject[]>();
 
     context.fieldResolversMap.forEach(fieldNodes => {
         fieldNodes.forEach(field => {
@@ -272,26 +281,16 @@ export async function updateResolvers(context: GeneratorContext) {
         const importPath = context.getResolversTypeImportPathFromResolversOutputPath(outputPath);
         const resolversTypeIdentifier = context.getResolversTypeIdentifierFromResolversOutputPath(outputPath);
 
-        const result = ts.transform(sourceFile, [transformResolvers(context, {
-            importPath: importPath,
-            resolversTypeIdentifier: resolversTypeIdentifier,
-            resolvers: transformObjects
-        })]);
+        const result = ts.transform(sourceFile, [
+            transformResolvers(context, {
+                importPath: importPath,
+                resolversTypeIdentifier: resolversTypeIdentifier,
+                resolvers: transformObjects,
+            }),
+        ]);
 
         return Promise.all(result.transformed.map(source => printSourceFile(source as ts.SourceFile))).then(
             _ => void 0,
         );
     }, Promise.resolve());
-}
-
-async function getTypescriptSourceFile(context: GeneratorContext, outputPath: string) {
-    const sourceFileExists = await exists(outputPath);
-    const sourceContent = sourceFileExists ? await readFile(outputPath) : '';
-    return ts.createSourceFile(
-        outputPath,
-        sourceContent.toString(),
-        context.targetLanguageVersion,
-        undefined,
-        ts.ScriptKind.TS,
-    );
 }

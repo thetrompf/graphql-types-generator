@@ -1,11 +1,10 @@
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
-import { GraphQLTypesGeneratorPlugin, GraphQLTypesPluginKind } from 'graphql-types-generator/generator/plugin';
-import * as ts from 'typescript';
 import { exists as existsNode, mkdir as mkdirNode } from 'fs';
+import { GraphQLTypesGeneratorPlugin, GraphQLTypesPluginKind } from 'graphql-types-generator/plugin';
+import * as ts from 'typescript';
 import { promisify } from 'util';
 
 const mkdir = promisify(mkdirNode);
-const exist = promisify(existsNode)
+const exist = promisify(existsNode);
 
 interface DataloaderPluginConfig {
     importPrefix: string;
@@ -13,8 +12,7 @@ interface DataloaderPluginConfig {
 }
 
 export const plugin: GraphQLTypesGeneratorPlugin<DataloaderPluginConfig> = {
-    config: null as any,
-    configure: (_, config): void => {
+    configure(_, config): void {
         if (
             typeof config !== 'object' ||
             config == null ||
@@ -24,24 +22,24 @@ export const plugin: GraphQLTypesGeneratorPlugin<DataloaderPluginConfig> = {
             throw new Error('');
         }
     },
-    filesytem: {
-        initial: async (_genContext: GeneratorContext) => {
-            if (!await exist(plugin.config.outputPath)) {
-                return mkdir(plugin.config.outputPath);
+    filesystem: {
+        async initial(_context, config): Promise<void> {
+            if (!(await exist(config.outputPath))) {
+                await mkdir(config.outputPath);
             }
         },
     },
     kind: GraphQLTypesPluginKind.TypeScript,
     typescript: {
-        transform(_genContext: GeneratorContext) {
+        transform() {
             return (context: ts.TransformationContext) => {
                 return (root: ts.Node): ts.Node => {
                     const visit = (node: ts.Node): ts.VisitResult<ts.Node> => {
                         return ts.visitEachChild(node, visit, context);
-                    }
+                    };
                     return ts.visitNode(root, visit);
-                }
-            }
-        }
-    }
+                };
+            };
+        },
+    },
 };

@@ -1,19 +1,12 @@
-import { visit, visitWithTypeInfo, TypeInfo, ASTNode } from 'graphql';
+import { ASTNode, TypeInfo, visit, visitWithTypeInfo } from 'graphql';
+import { collectOperationType } from 'graphql-types-generator/collectOperationType';
+import { GeneratorContext } from 'graphql-types-generator/GeneratorContext';
+import { collectInterfaceDefinitions } from 'graphql-types-generator/interfaceTypes';
 import {
+    collectInputObjectTypeDefinitions,
     collectTypeDefinitions,
     collectTypeExtensions,
-    collectInputObjectTypeDefinitions,
-} from 'graphql-types-generator/generator/objectTypes';
-import { collectInterfaceDefinitions } from 'graphql-types-generator/generator/interfaceTypes';
-import { GeneratorContext } from 'graphql-types-generator/generator/GeneratorContext';
-import { collectOperationType } from 'graphql-types-generator/generator/collectOperationType';
-
-export function visitor(context: GeneratorContext): void {
-    const document = context.document;
-    const schema = context.schema;
-    const typeInfo = new TypeInfo(schema);
-    document.definitions.forEach(def => visitNode(context, typeInfo, def));
-}
+} from 'graphql-types-generator/objectTypes';
 
 function visitNode(context: GeneratorContext, typeInfo: TypeInfo, astNode: ASTNode) {
     visit(
@@ -36,4 +29,11 @@ function visitNode(context: GeneratorContext, typeInfo: TypeInfo, astNode: ASTNo
             },
         }),
     );
+}
+
+export function visitor(context: GeneratorContext): void {
+    const document = context.document;
+    const schema = context.schema;
+    const typeInfo = new TypeInfo(schema);
+    document.definitions.forEach(def => visitNode(context, typeInfo, def));
 }

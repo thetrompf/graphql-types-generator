@@ -1,6 +1,6 @@
-import { ProfileViewerResolvers } from 'graphql-types-generator/schemas/Viewer.graphql';
+import { ProfileViewerResolvers } from 'app/schemas-old/Viewer.graphql';
 export const resolvers: ProfileViewerResolvers = {
-    profile: (context, viewer, args) => {
+    profile: (_context, _viewer, _args) => {
         throw new Error('Not implemented yet!');
     },
 };

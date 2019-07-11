@@ -3,15 +3,15 @@ export interface GraphQLTypesGeneratorConfigPlugins {
 }
 
 export interface GraphQLTypesGeneratorConfig {
-    plugins: GraphQLTypesGeneratorConfigPlugins
+    plugins: GraphQLTypesGeneratorConfigPlugins;
 }
 
-export function validateConfig(config: any): GraphQLTypesGeneratorConfig {
-    if (config == null || Object.keys(config.plugins).length === 0) {
+export function validateConfig(config: Partial<GraphQLTypesGeneratorConfig>): GraphQLTypesGeneratorConfig {
+    if (config == null || config.plugins == null || Object.keys(config.plugins).length === 0) {
         throw new Error(`
 Invalid configuration:
 - plugings: must be an array of objects.
 `);
     }
-    return config;
+    return config as GraphQLTypesGeneratorConfig;
 }

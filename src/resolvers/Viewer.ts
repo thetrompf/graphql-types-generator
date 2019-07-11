@@ -1,2 +1,2 @@
-import { ViewerResolvers } from 'graphql-types-generator/schemas/Viewer.graphql';
+import { ViewerResolvers } from 'app/schemas-old/Viewer.graphql';
 export const resolvers: ViewerResolvers = {};

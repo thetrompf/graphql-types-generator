@@ -1,9 +1,9 @@
-import { ProfileMutationResolvers } from 'graphql-types-generator/schemas/Mutation.graphql';
+import { ProfileMutationResolvers } from 'app/schemas-old/Mutation.graphql';
 export const resolvers: ProfileMutationResolvers = {
-    changeProfileName: (context, mutation, args) => {
+    changeProfileName: (_context, _mutation, _args) => {
         throw new Error('Not implemented yet!');
     },
-    createProfile: (context, mutation, args) => {
+    createProfile: (_context, _mutation, _args) => {
         throw new Error('Not implemented yet!');
     },
 };

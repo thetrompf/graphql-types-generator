@@ -1,4 +1,4 @@
-import { GraphQLTypesGeneratorPlugin, GraphQLTypesPluginKind } from 'graphql-types-generator/generator/plugin';
+import { GraphQLTypesGeneratorPlugin, GraphQLTypesPluginKind } from 'graphql-types-generator/plugin';
 
 interface ContextPluginConfig {
     importPath: string;
@@ -6,7 +6,6 @@ interface ContextPluginConfig {
 }
 
 export const plugin: GraphQLTypesGeneratorPlugin<ContextPluginConfig> = {
-    config: null as any,
     configure(_, config): void {
         if (
             typeof config !== 'object' ||
@@ -35,5 +34,22 @@ plugins:
 `);
         }
     },
+    //     filesystem: {
+    //         initial: async (_context, config): Promise<void> => {
+    //             try {
+    //                 const contextModule = await import(config.importPath);
+    //                 if (typeof contextModule == null || typeof contextModule[config.importName] == null) {
+    //                     throw new Error(
+    //                         `[graphql-types-generator/plugins/context] The context module was successfully loaded
+    // but could not find the Context export with name ${config.importName},
+    // check if you have provided the correct importName in the config.`,
+    //                     );
+    //                 }
+    //             } catch (e) {
+    //                 console.error(e);
+    //                 throw new Error(`Could not load context from importPath: ${config.importPath}`);
+    //             }
+    //         },
+    //     },
     kind: GraphQLTypesPluginKind.TypeScript,
-}
+};

@@ -6,6 +6,7 @@ import {
     ObjectTypeExtensionNode,
     printError,
     StringValueNode,
+    Location,
 } from 'graphql';
 import * as ts from 'typescript';
 
@@ -68,3 +69,19 @@ export function withComment<TNode extends ts.Node>(
 
 export type SourceFileDependencyMap = Map<string, Set<string>>;
 
+export function assertSourceLocation<TNode extends { loc?: Location }>(node: TNode): TNode & { loc: Location } {
+    if (node.loc == null) {
+        throw new Error('No source location found for node');
+    }
+    return node as TNode & { loc: Location };
+}
+
+export function filterMap<T, U extends T, R>(arr: T[], filterFn: (val: T) => val is U, mapFn: (e: U) => R): R[] {
+    return arr.filter(filterFn).map(mapFn);
+}
+
+export function filterTupleEntry<T1, T2, U1 extends T1>(
+    filterFn: (val: T1) => val is U1,
+): (tuple: [T1, T2]) => tuple is [U1, T2] {
+    return (tuple): tuple is [U1, T2] => filterFn(tuple[0]);
+}
