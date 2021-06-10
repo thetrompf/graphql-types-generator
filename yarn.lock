@@ -350,14 +350,14 @@
     "@types/express-serve-static-core" "*"
     "@types/serve-static" "*"
 
-"@types/graphql-relay@^0.4.9":
-  version "0.4.9"
-  resolved "https://registry.yarnpkg.com/@types/graphql-relay/-/graphql-relay-0.4.9.tgz#0f34ee87a1bf1fc4c986eeefe0707318c7433212"
-  integrity sha512-SL0UXsnNozTBIXwSs0pGB1iTWKaQzxmfqBwx9m0NvDGg463sYaFw4f7rizTzL4OSaVobLkvGJWUPesbg66MfHw==
+"@types/graphql-relay@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/@types/graphql-relay/-/graphql-relay-0.7.0.tgz#e6187e7ba76bbf3dccbef32a21ba5d23affa7160"
+  integrity sha512-LQHsyXFX5ZXFxgrLlRg5skLp17GBVTEzM8IE0iIt9Id5EwxS80qhdj2H01+7GzCPcRxVdQqbIFlTRUU6QFhaFw==
   dependencies:
-    "@types/graphql" "*"
+    graphql-relay "*"
 
-"@types/graphql@*", "@types/graphql@^14.2.3":
+"@types/graphql@^14.2.3":
   version "14.2.3"
   resolved "https://registry.yarnpkg.com/@types/graphql/-/graphql-14.2.3.tgz#cfc6420a67eb20420786f90112357921974593b9"
   integrity sha512-UoCovaxbJIxagCvVfalfK7YaNhmxj3BQFRQ2RHQKLiu+9wNXhJnlbspsLHt/YQM99IaLUUFJNzCwzc6W0ypMeQ==
@@ -1355,6 +1355,11 @@ graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2:
   version "4.1.15"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.15.tgz#ffb703e1066e8a0eeaa4c8b80ba9253eeefbfb00"
   integrity sha512-6uHUhOPEBgQ24HM+r6b/QwWfZq+yiFcipKFrOFiBEnWdy5sdzYoi+pJeQaPI5qOLRFqWmAXUPQNsielzdLoecA==
+
+graphql-relay@*:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/graphql-relay/-/graphql-relay-0.7.0.tgz#e5c7a4bb52ede09e90e92dfd7b89d5947362278b"
+  integrity sha512-P8eS3IbZRhbfbcfud1Q6VPrIru4hchkb15MuOij+WQo9r0chD5NBIxiVjuRE2iG2EMHxIOrZb8LnMe82+YdITA==
 
 graphql-relay@^0.6.0:
   version "0.6.0"
